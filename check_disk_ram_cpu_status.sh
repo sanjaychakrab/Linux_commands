@@ -15,7 +15,7 @@ if [ ! -d $DAILY_REPORT ];
 fi
 # get the name for hosts file. Remove scan /vip and not needed names
 #/bin/cat /etc/hosts |egrep 'ptl|ptl2' |awk '{print $2}' |egrep -v 'scan|priv|dac|vip|us|wx|ptl4|ptl3|ptl5|ptl6'  > $HOSTS, prefer to pickup host by ip
-/bin/cat /etc/hosts |egrep 'abcptl*' |awk '{print $1}' |egrep -v 'scan|priv|dac|vip|us|wx|ptl4|ptl3|ptl5|ptl6'  > $HOSTS
+/bin/cat /etc/hosts/* |awk '{print $1}' |egrep -v 'scan|priv|dac|vip|localhost'  > $HOSTS
 #### variable setup ends
 #better display
 COUNTER() {
