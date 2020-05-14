@@ -1,0 +1,43 @@
+setfacl - set file access control lists:
+
+       Granting an additional user read access
+              setfacl -m u:lisa:r file
+
+       Revoking write access from all groups and all named users (using the effective rights mask)
+              setfacl -m m::rx file
+
+       Removing a named group entry from a file's ACL
+              setfacl -x g:staff file
+
+       Copying the ACL of one file to another
+              getfacl file1 | setfacl --set-file=- file2
+
+       Copying the access ACL into the Default ACL
+              getfacl --access dir | setfacl -d -M- dir
+
+chown -- change ownership of a file
+      
+      chown root /u
+        Change the owner of /u to "root".
+      
+      own root:staff /u
+        Likewise, but also change its group to "staff".
+
+      chown -hR root /u
+      Change the owner of /u and subfiles to "root".
+
+ chmod  -- change file mode bits
+        chmod  664 file
+           Changed the permission to -rw-rw-r-- 
+        chmod  775 file
+           Changed the permission to -rwxrwxr-x.
+
+umask  -- The user file-creation mask is set to mode
+
+         $ umask 
+           002      
+          defualt umask is 0002 : will make 7775  or drwxrwxr-x. dirctroy
+       
+         $  umask 00000 (which is 7777) : will make drwxrwxrrx. directory
+         
+          umask 0555 will make 7222 which is d-w--w--w-. for dir and --w--w--w-. for file
