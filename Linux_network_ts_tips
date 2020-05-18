@@ -1,0 +1,80 @@
+ ip link to show all the link status:
+
+To check network layer 1 ( is your physical link is up ?  )
+   #  ip link show
+    1: lo: ...
+    2: eth0: <BROADCAST,MULTICAST> mtu 1500 qdisc pfifo_fast state DOWN  ---> ( DOWN !! )
+    to make sure to check eth0 interface is not disabled before talking to network team for cable/switch issue
+    # ip link set eth0 up
+    then 
+    ip -br link show
+    ..
+    eth0 UP 52:54:00:82:d6:6e <BROADCAST,MULTICAST,UP,LOWER_UP>
+     it looks like ip link set eth0 up did the trick, and eth0 is back in business.
+  
+  To check interface negotiating INCORRECT speed or collisions or physical layer problems
+    # ip -s link show eth0
+    ...
+    link/ether 52:54:00:82:d6:6e brd ff:ff:ff:ff:ff:ff
+    RX: bytes packets errors dropped overrun mcast
+    34107919 5808 0 6 0 0
+    TX: bytes packets errors dropped carrier collsns
+    434573 4487 0 0 0 0
+    # ethtool eth0
+    ifconfig eth0 ( look for error drop collision for RX and TX )
+
+To check Layer 2 ( data link layer )
+    Layer 2 protocol for SYSADMIN is the Address Resolution Protocol (ARP), which maps Layer 3 IP addresses to Layer 2 Ethernet MAC addresses. 
+    We can check the entries in our ARP table with the ip neighbor command:
+    # ip neighbor show
+    192.168.122.1 dev eth0 FAILED  --> ISSUE ( it may happen due to upstream router ( server gw) has changed and     mac address has been changed.
+    Note: While unique MAC addresses are assigned to devices at the factory, it is possible to change or spoof th    ese. Many modern networks often also use protocols such as the Virtual Router Redundancy Protocol (VRRP), whi    ch use a generated MAC address.
+
+    you can manually delete the ARP table 
+    # ip neighbor show
+    192.168.122.170 dev eth0 lladdr 52:54:00:04:2c:5d REACHABLE
+    192.168.122.1 dev eth0 lladdr 52:54:00:11:23:84 REACHABLE
+    # ip neighbor delete 192.168.122.170 dev eth0
+    # ip neighbor show
+    192.168.122.1 dev eth0 lladdr 52:54:00:11:23:84 REACHABLE
+
+To check Layer 3 ( The network/internet layer) Layer 3 involves working with IP addresses
+    # ip -br address show
+    ...
+    eth0 UP 192.168.122.135/24 fe80::184e:a34d:1d37:441a/64 fe80::c52f:d96e:a4a2:743/64
+        it is showing IPv4 address ( if ip address missing then may be incorrect network interface config file or       it can be cause by problems with DHCP
+        if ip address not showing or reachable  use ping to check
+        next tool in the Layer 3 troubleshooting tool is the traceroute
+    # traceroute www.google.com
+        it is good tool but depends on ICMP 
+        Another common issue that you¿ll likely run into is a lack of an upstream gateway for a particular route or a lack of a default route. When an IP packet is sent to a different network, it must be sent to a gateway for further processing. The gateway should know how to route the packet to its final destination. The list of gateways for different routes is stored in a routing table, which can be inspected and manipulated using ip route commands.
+         We can print the routing table using the ip route show command:
+
+        # ip route show
+        If our topology is more complex and we require different routes for different networks, we can check the route for a specific prefix:
+        # ip route show 10.0.0.0/8
+        10.0.0.0/8 via 192.168.122.200 dev eth0
+        In the example above, we are sending all traffic destined to the 10.0.0.0/8 network to a different gateway (192.168.122.200).
+
+        While not a Layer 3 protocol, it¿s worth mentioning DNS while we¿re talking about IP addressing. 
+
+        check the /etc/hosts file use nslookup
+
+    Layer 4: The transport layer
+        is ports are listening ?
+        # ss -tunlp4
+        -t - Show TCP ports.
+        -u - Show UDP ports.
+        -n - Do not try to resolve hostnames.
+        -l - Show only listening ports.
+        -p - Show the processes that are using a particular socket.
+        -4 - Show only IPv4 sockets.
+
+        # telnet database.example.com 3306  ( telnet works fine for tcp) NOT UDP
+        The netcat tool provides a simple way to check a remote UDP port:
+        
+        # nc 192.168.122.1 -u 80
+        test
+        Ncat: Connection refused.Ncat: Connection refused.
+        anaother tool is nmap 
+
